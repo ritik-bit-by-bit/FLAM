@@ -24,10 +24,21 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
     // Native methods
     static {
         try {
+            android.util.Log.d("FrameProcessor", "Attempting to load native library 'opencv_processing'...");
             System.loadLibrary("opencv_processing");
-            android.util.Log.d("FrameProcessor", "Native library loaded successfully");
+            android.util.Log.d("FrameProcessor", "✅ Native library 'opencv_processing' loaded successfully!");
         } catch (UnsatisfiedLinkError e) {
-            android.util.Log.e("FrameProcessor", "Failed to load native library: " + e.getMessage());
+            android.util.Log.e("FrameProcessor", "❌ CRITICAL: Failed to load native library 'opencv_processing'");
+            android.util.Log.e("FrameProcessor", "Error: " + e.getMessage());
+            android.util.Log.e("FrameProcessor", "Stack trace:");
+            e.printStackTrace();
+            android.util.Log.e("FrameProcessor", "Possible causes:");
+            android.util.Log.e("FrameProcessor", "1. Native library not built (check build output)");
+            android.util.Log.e("FrameProcessor", "2. OpenCV not properly configured in CMakeLists.txt");
+            android.util.Log.e("FrameProcessor", "3. Library name mismatch");
+            android.util.Log.e("FrameProcessor", "4. Missing OpenCV dependencies");
+        } catch (Exception e) {
+            android.util.Log.e("FrameProcessor", "❌ Unexpected error loading native library: " + e.getMessage());
             e.printStackTrace();
         }
     }
