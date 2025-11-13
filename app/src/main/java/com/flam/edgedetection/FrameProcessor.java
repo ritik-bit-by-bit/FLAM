@@ -18,6 +18,8 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
     private long lastFrameTime = 0;
     private int frameCount = 0;
     private long fpsStartTime = System.currentTimeMillis();
+    private long lastFrameProcessingTime = 0;
+    private int currentFps = 0;
     
     // Native methods
     static {
@@ -125,12 +127,22 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
         int[] outputPixels = new int[width * height];
         
         try {
+            long startTime = System.nanoTime();
+            
             // Process frame using native OpenCV
             processFrame(yuvData, width, height, outputPixels, processingEnabled);
+            
+            long processingTime = System.nanoTime() - startTime;
+            lastFrameProcessingTime = processingTime;
             
             // Update renderer with processed frame
             if (renderer != null) {
                 renderer.updateFrame(outputPixels, width, height);
+            }
+            
+            // Send frame to web viewer (every 5 frames to reduce network load)
+            if (frameCount % 5 == 0) {
+                FrameSender.sendFrame(outputPixels, width, height, currentFps, processingTime);
             }
             
             // Update resolution (only once per session or when changed)
@@ -150,12 +162,12 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
         long currentTime = System.currentTimeMillis();
         
         if (currentTime - fpsStartTime >= 1000) {
-            int fps = frameCount;
+            currentFps = frameCount;
             frameCount = 0;
             fpsStartTime = currentTime;
             
             if (fpsCallback != null) {
-                fpsCallback.onFpsUpdate(fps);
+                fpsCallback.onFpsUpdate(currentFps);
             }
         }
     }

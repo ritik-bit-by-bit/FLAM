@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "serve": "npx http-server . -p 8080"
+    "serve": "node server.js",
+    "serve-simple": "npx http-server . -p 8080"
   },
   "keywords": [
     "opencv",

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FLAM Edge Detection - Web Viewer</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -61,7 +62,22 @@
         </main>
     </div>
     
-    <script type="module" src="dist/index.js"></script>
+    <script type="module">
+        import { EdgeDetectionViewer } from './dist/viewer.js';
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const viewer = new EdgeDetectionViewer('frameCanvas', 'frameStats');
+                viewer.simulateFrameUpdate();
+                setInterval(() => {
+                    viewer.simulateFrameUpdate();
+                }, 2000);
+                console.log('FLAM Edge Detection Web Viewer initialized');
+            } catch (error) {
+                console.error('Failed to initialize viewer:', error);
+            }
+        });
+    </script>
 </body>
 </html>
 

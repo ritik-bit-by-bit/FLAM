@@ -66,6 +66,9 @@ public class MainActivity extends AppCompatActivity {
         frameProcessor.setResolutionCallback((width, height) -> 
             runOnUiThread(() -> resolutionTextView.setText("Resolution: " + width + "x" + height)));
         
+        // Enable frame sending to web viewer (update IP address in FrameSender.java)
+        FrameSender.setEnabled(true);
+        
         cameraExecutor = Executors.newSingleThreadExecutor();
         
         toggleButton.setOnClickListener(v -> {

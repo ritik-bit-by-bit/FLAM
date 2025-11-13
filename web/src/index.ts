@@ -7,15 +7,16 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
         const viewer = new EdgeDetectionViewer('frameCanvas', 'frameStats');
         
-        // Display initial sample frame
-        viewer.simulateFrameUpdate();
+        // Try to fetch real frame, fallback to demo
+        viewer.fetchLatestFrame();
         
-        // Simulate frame updates every 2 seconds (for demo)
+        // Poll for new frames from Android app every 100ms (10 FPS display)
         setInterval(() => {
-            viewer.simulateFrameUpdate();
-        }, 2000);
+            viewer.fetchLatestFrame();
+        }, 100);
         
         console.log('FLAM Edge Detection Web Viewer initialized');
+        console.log('Waiting for frames from Android app...');
     } catch (error) {
         console.error('Failed to initialize viewer:', error);
     }

@@ -134,6 +134,29 @@ export class EdgeDetectionViewer {
     }
     
     /**
+     * Fetch latest frame from server (called by Android app)
+     */
+    public async fetchLatestFrame(): Promise<void> {
+        try {
+            const response = await fetch('/api/frame');
+            if (response.ok) {
+                const frameData = await response.json();
+                if (frameData.image && !frameData.error) {
+                    this.displayFrame(frameData.image, {
+                        fps: frameData.fps || 0,
+                        resolution: frameData.resolution || { width: 0, height: 0 },
+                        processingTime: frameData.processingTime || 0
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching frame:', error);
+            // Fallback to demo if no real frame available
+            this.simulateFrameUpdate();
+        }
+    }
+
+    /**
      * Simulate receiving frame data (for demo)
      */
     public simulateFrameUpdate(): void {
