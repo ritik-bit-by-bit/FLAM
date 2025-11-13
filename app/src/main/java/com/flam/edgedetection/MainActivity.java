@@ -63,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
         frameProcessor = new FrameProcessor();
         frameProcessor.setRenderer(renderer);
         frameProcessor.setFpsCallback(fps -> runOnUiThread(() -> fpsTextView.setText("FPS: " + fps)));
+        frameProcessor.setResolutionCallback((width, height) -> 
+            runOnUiThread(() -> resolutionTextView.setText("Resolution: " + width + "x" + height)));
         
         cameraExecutor = Executors.newSingleThreadExecutor();
         

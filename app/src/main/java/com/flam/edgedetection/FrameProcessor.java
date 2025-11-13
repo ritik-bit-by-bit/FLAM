@@ -15,6 +15,7 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
     private EdgeDetectionRenderer renderer;
     private boolean processingEnabled = true;
     private FpsCallback fpsCallback;
+    private ResolutionCallback resolutionCallback;
     
     private long lastFrameTime = 0;
     private int frameCount = 0;
@@ -38,6 +39,10 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
     
     public void setFpsCallback(FpsCallback callback) {
         this.fpsCallback = callback;
+    }
+    
+    public void setResolutionCallback(ResolutionCallback callback) {
+        this.resolutionCallback = callback;
     }
     
     @Override
@@ -75,6 +80,11 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
             renderer.updateFrame(outputPixels, width, height);
         }
         
+        // Update resolution (only once per session or when changed)
+        if (resolutionCallback != null) {
+            resolutionCallback.onResolutionUpdate(width, height);
+        }
+        
         // Calculate FPS
         updateFps();
     }
@@ -100,6 +110,10 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
     
     interface FpsCallback {
         void onFpsUpdate(int fps);
+    }
+    
+    interface ResolutionCallback {
+        void onResolutionUpdate(int width, int height);
     }
 }
 
