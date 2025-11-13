@@ -21,7 +21,13 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
     
     // Native methods
     static {
-        System.loadLibrary("opencv_processing");
+        try {
+            System.loadLibrary("opencv_processing");
+            android.util.Log.d("FrameProcessor", "Native library loaded successfully");
+        } catch (UnsatisfiedLinkError e) {
+            android.util.Log.e("FrameProcessor", "Failed to load native library: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     public native void processFrame(byte[] yuvData, int width, int height, 
@@ -45,14 +51,26 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
     
     @Override
     public void analyze(@NonNull ImageProxy image) {
-        if (image.getFormat() == ImageFormat.YUV_420_888) {
-            processYUVFrame(image);
+        try {
+            if (image.getFormat() == ImageFormat.YUV_420_888) {
+                processYUVFrame(image);
+            } else {
+                android.util.Log.w("FrameProcessor", "Unsupported image format: " + image.getFormat());
+            }
+        } catch (Exception e) {
+            android.util.Log.e("FrameProcessor", "Error processing frame: " + e.getMessage(), e);
+        } finally {
+            image.close();
         }
-        image.close();
     }
     
     private void processYUVFrame(ImageProxy image) {
         Image.Plane[] planes = image.getPlanes();
+        if (planes.length < 3) {
+            android.util.Log.e("FrameProcessor", "Invalid YUV image: expected 3 planes, got " + planes.length);
+            return;
+        }
+        
         ByteBuffer yBuffer = planes[0].getBuffer();
         ByteBuffer uBuffer = planes[1].getBuffer();
         ByteBuffer vBuffer = planes[2].getBuffer();
@@ -60,57 +78,71 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
         int width = image.getWidth();
         int height = image.getHeight();
         
+        android.util.Log.d("FrameProcessor", "Processing frame: " + width + "x" + height);
+        
         // YUV_420_888 to NV21 conversion
         // NV21 format: Y plane + interleaved VU plane
-        int ySize = yBuffer.remaining();
+        int ySize = width * height;
         int uvSize = width * height / 2;  // UV plane size for NV21
-        
         byte[] yuvData = new byte[ySize + uvSize];
         
-        // Copy Y plane
-        yBuffer.get(yuvData, 0, ySize);
+        // Copy Y plane (ensure we copy exactly width*height bytes)
+        yBuffer.rewind();
+        if (yBuffer.remaining() >= ySize) {
+            yBuffer.get(yuvData, 0, ySize);
+        } else {
+            android.util.Log.w("FrameProcessor", "Y buffer smaller than expected: " + yBuffer.remaining() + " < " + ySize);
+            yBuffer.get(yuvData, 0, Math.min(ySize, yBuffer.remaining()));
+        }
         
         // Convert UV planes to interleaved VU (NV21 format)
-        // In YUV_420_888, U and V are separate, we need to interleave them as VU
         int uvRowStride = planes[1].getRowStride();
         int uvPixelStride = planes[1].getPixelStride();
+        int vRowStride = planes[2].getRowStride();
+        int vPixelStride = planes[2].getPixelStride();
         int uvPlaneOffset = ySize;
         
-        byte[] uRow = new byte[uvRowStride];
-        byte[] vRow = new byte[planes[2].getRowStride()];
+        // Interleave U and V planes
+        ByteBuffer uBufferCopy = uBuffer.duplicate();
+        ByteBuffer vBufferCopy = vBuffer.duplicate();
         
         for (int row = 0; row < height / 2; row++) {
-            uBuffer.position(row * uvRowStride);
-            uBuffer.get(uRow, 0, Math.min(uvRowStride, uBuffer.remaining()));
-            
-            vBuffer.position(row * planes[2].getRowStride());
-            vBuffer.get(vRow, 0, Math.min(planes[2].getRowStride(), vBuffer.remaining()));
-            
-            // Interleave VU
             for (int col = 0; col < width / 2; col++) {
-                int uvIndex = uvPlaneOffset + row * width + col * 2;
-                yuvData[uvIndex] = vRow[col * uvPixelStride];     // V
-                yuvData[uvIndex + 1] = uRow[col * uvPixelStride]; // U
+                int uPos = row * uvRowStride + col * uvPixelStride;
+                int vPos = row * vRowStride + col * vPixelStride;
+                
+                if (uPos < uBufferCopy.limit() && vPos < vBufferCopy.limit()) {
+                    uBufferCopy.position(uPos);
+                    vBufferCopy.position(vPos);
+                    
+                    int uvIndex = uvPlaneOffset + row * width + col * 2;
+                    yuvData[uvIndex] = vBufferCopy.get();     // V
+                    yuvData[uvIndex + 1] = uBufferCopy.get(); // U
+                }
             }
         }
         
         int[] outputPixels = new int[width * height];
         
-        // Process frame using native OpenCV
-        processFrame(yuvData, width, height, outputPixels, processingEnabled);
-        
-        // Update renderer with processed frame
-        if (renderer != null) {
-            renderer.updateFrame(outputPixels, width, height);
+        try {
+            // Process frame using native OpenCV
+            processFrame(yuvData, width, height, outputPixels, processingEnabled);
+            
+            // Update renderer with processed frame
+            if (renderer != null) {
+                renderer.updateFrame(outputPixels, width, height);
+            }
+            
+            // Update resolution (only once per session or when changed)
+            if (resolutionCallback != null) {
+                resolutionCallback.onResolutionUpdate(width, height);
+            }
+            
+            // Calculate FPS
+            updateFps();
+        } catch (Exception e) {
+            android.util.Log.e("FrameProcessor", "Error in native processing: " + e.getMessage(), e);
         }
-        
-        // Update resolution (only once per session or when changed)
-        if (resolutionCallback != null) {
-            resolutionCallback.onResolutionUpdate(width, height);
-        }
-        
-        // Calculate FPS
-        updateFps();
     }
     
     private void updateFps() {

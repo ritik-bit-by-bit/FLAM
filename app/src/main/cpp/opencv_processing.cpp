@@ -22,20 +22,29 @@ Java_com_flam_edgedetection_FrameProcessor_processFrame(
         jintArray outputPixels,
         jboolean enableProcessing) {
     
+    LOGI("Processing frame: %dx%d, processing: %d", width, height, enableProcessing);
+    
     // Get input data
     jbyte* yuvBytes = env->GetByteArrayElements(yuvData, nullptr);
     jint* outputInts = env->GetIntArrayElements(outputPixels, nullptr);
     
+    if (yuvBytes == nullptr || outputInts == nullptr) {
+        LOGE("Failed to get array elements");
+        return;
+    }
+    
     // Convert YUV to Mat
-    // YUV_420_888 format: Y plane + interleaved UV plane
-    // For NV21-like conversion, we create a Mat with proper dimensions
-    int yuvSize = width * height * 3 / 2;  // YUV420 format size
-    Mat yuvMat(height + height/2, width, CV_8UC1, (unsigned char*)yuvBytes);
+    // NV21 format: Y plane (width*height) + interleaved VU plane (width*height/2)
+    int yuvHeight = height + height / 2;
+    Mat yuvMat(yuvHeight, width, CV_8UC1, (unsigned char*)yuvBytes);
     Mat rgbMat;
     
-    // Convert YUV to RGB (assuming NV21 format from CameraX)
+    LOGI("YUV Mat created: %dx%d", yuvMat.cols, yuvMat.rows);
+    
+    // Convert YUV to RGB (NV21 format)
     try {
         cvtColor(yuvMat, rgbMat, COLOR_YUV2RGB_NV21);
+        LOGI("YUV to RGB conversion successful: %dx%d", rgbMat.cols, rgbMat.rows);
     } catch (cv::Exception& e) {
         LOGE("OpenCV conversion error: %s", e.what());
         env->ReleaseByteArrayElements(yuvData, yuvBytes, JNI_ABORT);
