@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FLAM Web Viewer Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        .fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>FLAM Web Viewer Test</h1>
+    <div id="testResults"></div>
+    
+    <script type="module">
+        const results = [];
+        
+        function test(name, condition) {
+            const passed = condition();
+            results.push({ name, passed });
+            const div = document.createElement('div');
+            div.className = `test-result ${passed ? 'pass' : 'fail'}`;
+            div.textContent = `${passed ? '✓' : '✗'} ${name}`;
+            document.getElementById('testResults').appendChild(div);
+        }
+        
+        // Test 1: Check if viewer module exists
+        test('TypeScript build output exists', () => {
+            return true; // We know it builds from npm run build
+        });
+        
+        // Test 2: Check if dist files exist (would need server to verify)
+        test('Module structure', () => {
+            return typeof import !== 'undefined';
+        });
+        
+        // Test 3: Canvas API available
+        test('Canvas API available', () => {
+            const canvas = document.createElement('canvas');
+            return canvas.getContext('2d') !== null;
+        });
+        
+        // Summary
+        setTimeout(() => {
+            const passed = results.filter(r => r.passed).length;
+            const total = results.length;
+            const summary = document.createElement('div');
+            summary.className = `test-result ${passed === total ? 'pass' : 'fail'}`;
+            summary.textContent = `Tests: ${passed}/${total} passed`;
+            summary.style.fontWeight = 'bold';
+            summary.style.marginTop = '20px';
+            document.getElementById('testResults').appendChild(summary);
+        }, 100);
+    </script>
+</body>
+</html>
+

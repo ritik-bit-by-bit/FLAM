@@ -1,9 +1,7 @@
 package com.flam.edgedetection;
 
-import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.media.Image;
-import android.util.Size;
 
 import androidx.annotation.NonNull;
 import androidx.camera.core.ImageAnalysis;
@@ -59,17 +57,43 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
         ByteBuffer uBuffer = planes[1].getBuffer();
         ByteBuffer vBuffer = planes[2].getBuffer();
         
-        int ySize = yBuffer.remaining();
-        int uSize = uBuffer.remaining();
-        int vSize = vBuffer.remaining();
-        
-        byte[] yuvData = new byte[ySize + uSize + vSize];
-        yBuffer.get(yuvData, 0, ySize);
-        uBuffer.get(yuvData, ySize, uSize);
-        vBuffer.get(yuvData, ySize + uSize, vSize);
-        
         int width = image.getWidth();
         int height = image.getHeight();
+        
+        // YUV_420_888 to NV21 conversion
+        // NV21 format: Y plane + interleaved VU plane
+        int ySize = yBuffer.remaining();
+        int uvSize = width * height / 2;  // UV plane size for NV21
+        
+        byte[] yuvData = new byte[ySize + uvSize];
+        
+        // Copy Y plane
+        yBuffer.get(yuvData, 0, ySize);
+        
+        // Convert UV planes to interleaved VU (NV21 format)
+        // In YUV_420_888, U and V are separate, we need to interleave them as VU
+        int uvRowStride = planes[1].getRowStride();
+        int uvPixelStride = planes[1].getPixelStride();
+        int uvPlaneOffset = ySize;
+        
+        byte[] uRow = new byte[uvRowStride];
+        byte[] vRow = new byte[planes[2].getRowStride()];
+        
+        for (int row = 0; row < height / 2; row++) {
+            uBuffer.position(row * uvRowStride);
+            uBuffer.get(uRow, 0, Math.min(uvRowStride, uBuffer.remaining()));
+            
+            vBuffer.position(row * planes[2].getRowStride());
+            vBuffer.get(vRow, 0, Math.min(planes[2].getRowStride(), vBuffer.remaining()));
+            
+            // Interleave VU
+            for (int col = 0; col < width / 2; col++) {
+                int uvIndex = uvPlaneOffset + row * width + col * 2;
+                yuvData[uvIndex] = vRow[col * uvPixelStride];     // V
+                yuvData[uvIndex + 1] = uRow[col * uvPixelStride]; // U
+            }
+        }
+        
         int[] outputPixels = new int[width * height];
         
         // Process frame using native OpenCV

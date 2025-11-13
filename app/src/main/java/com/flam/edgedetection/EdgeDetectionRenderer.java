@@ -3,7 +3,6 @@ package com.flam.edgedetection;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
-import android.opengl.GLUtils;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -32,6 +31,7 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
             "}";
     
     private Context context;
+    private GLSurfaceView glSurfaceView;
     private int program;
     private int textureHandle;
     private FloatBuffer vertexBuffer;
@@ -75,6 +75,10 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
         texCoordBuffer = tb.asFloatBuffer();
         texCoordBuffer.put(TEX_COORDS);
         texCoordBuffer.position(0);
+    }
+    
+    public void setGLSurfaceView(GLSurfaceView glSurfaceView) {
+        this.glSurfaceView = glSurfaceView;
     }
     
     @Override
@@ -158,6 +162,10 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
             this.frameWidth = width;
             this.frameHeight = height;
             this.frameUpdated = true;
+        }
+        // Request render when frame is updated
+        if (glSurfaceView != null) {
+            glSurfaceView.requestRender();
         }
     }
     

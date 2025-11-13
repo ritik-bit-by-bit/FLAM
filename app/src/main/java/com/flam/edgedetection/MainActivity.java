@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -55,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         
         // Initialize OpenGL renderer
         renderer = new EdgeDetectionRenderer(this);
+        renderer.setGLSurfaceView(glSurfaceView);
         glSurfaceView.setEGLContextClientVersion(2);
         glSurfaceView.setRenderer(renderer);
         glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
