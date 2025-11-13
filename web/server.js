@@ -23,32 +23,54 @@ let latestFrame = null;
 const server = http.createServer((req, res) => {
     const parsedUrl = url.parse(req.url, true);
     let pathname = parsedUrl.pathname;
+    
+    // Log all incoming requests for debugging
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`[${timestamp}] ${req.method} ${pathname} from ${req.socket.remoteAddress || 'unknown'}`);
 
     // API endpoint to receive frames from Android
     if (pathname === '/api/frame' && req.method === 'POST') {
+        console.log('POST /api/frame - Receiving frame data...');
         let body = '';
         req.on('data', chunk => {
             body += chunk.toString();
         });
         req.on('end', () => {
+            console.log(`Received body length: ${body.length} bytes`);
+            if (body.length === 0) {
+                console.error('ERROR: Empty request body!');
+                res.writeHead(400, { 
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                });
+                res.end(JSON.stringify({ error: 'Empty request body' }));
+                return;
+            }
+            
             try {
                 const frameData = JSON.parse(body);
                 latestFrame = frameData;
                 const timestamp = new Date().toLocaleTimeString();
-                console.log(`[${timestamp}] Received frame: ${frameData.width}x${frameData.height}, FPS: ${frameData.fps}`);
+                console.log(`[${timestamp}] ✓ Received frame: ${frameData.width}x${frameData.height}, FPS: ${frameData.fps}`);
+                console.log(`    Image data length: ${frameData.image ? frameData.image.length : 0} chars`);
                 res.writeHead(200, { 
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': '*'
                 });
                 res.end(JSON.stringify({ success: true }));
             } catch (e) {
-                console.error('Error parsing frame data:', e.message);
+                console.error('ERROR parsing frame data:', e.message);
+                console.error('Body preview (first 200 chars):', body.substring(0, 200));
                 res.writeHead(400, { 
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': '*'
                 });
                 res.end(JSON.stringify({ error: 'Invalid JSON: ' + e.message }));
             }
+        });
+        
+        req.on('error', (err) => {
+            console.error('Request error:', err);
         });
         return;
     }

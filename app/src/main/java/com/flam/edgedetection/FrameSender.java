@@ -67,15 +67,37 @@ public class FrameSender {
                 
                 int responseCode = conn.getResponseCode();
                 if (responseCode == 200) {
-                    Log.d(TAG, "Frame sent successfully: " + width + "x" + height);
+                    Log.d(TAG, "✓ Frame sent successfully: " + width + "x" + height + ", FPS: " + fps);
                 } else {
-                    Log.w(TAG, "Failed to send frame, response code: " + responseCode);
+                    Log.w(TAG, "✗ Failed to send frame, response code: " + responseCode);
+                    // Read error response
+                    try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                            new java.io.InputStreamReader(conn.getErrorStream()))) {
+                        String line;
+                        StringBuilder response = new StringBuilder();
+                        while ((line = reader.readLine()) != null) {
+                            response.append(line);
+                        }
+                        Log.w(TAG, "Error response: " + response.toString());
+                    } catch (Exception e) {
+                        Log.w(TAG, "Could not read error response");
+                    }
                 }
                 
                 conn.disconnect();
                 
+            } catch (java.net.ConnectException e) {
+                Log.e(TAG, "✗ Connection failed - Is server running? " + e.getMessage());
+                Log.e(TAG, "  Server URL: " + SERVER_URL);
+                Log.e(TAG, "  Make sure: 1) Server is running, 2) Same WiFi network, 3) Correct IP address");
+            } catch (java.net.SocketTimeoutException e) {
+                Log.e(TAG, "✗ Connection timeout - Server not responding: " + e.getMessage());
             } catch (IOException e) {
-                Log.e(TAG, "Error sending frame: " + e.getMessage());
+                Log.e(TAG, "✗ Error sending frame: " + e.getMessage());
+                e.printStackTrace();
+            } catch (Exception e) {
+                Log.e(TAG, "✗ Unexpected error: " + e.getMessage());
+                e.printStackTrace();
             }
         }).start();
     }
