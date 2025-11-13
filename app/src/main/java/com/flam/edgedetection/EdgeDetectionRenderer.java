@@ -190,23 +190,35 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
             }
         }
         
-        // Draw quad with texture
+        // Draw quad with texture (always draw, even if no new frame)
         GLES20.glUseProgram(program);
         
         int positionHandle = GLES20.glGetAttribLocation(program, "vPosition");
-        GLES20.glEnableVertexAttribArray(positionHandle);
-        GLES20.glVertexAttribPointer(positionHandle, 3, GLES20.GL_FLOAT, false, 
-                                     12, vertexBuffer);
+        if (positionHandle < 0) {
+            android.util.Log.e("EdgeDetectionRenderer", "❌ vPosition attribute not found!");
+        } else {
+            GLES20.glEnableVertexAttribArray(positionHandle);
+            GLES20.glVertexAttribPointer(positionHandle, 3, GLES20.GL_FLOAT, false, 
+                                         12, vertexBuffer);
+        }
         
         int texCoordHandle = GLES20.glGetAttribLocation(program, "vTexCoord");
-        GLES20.glEnableVertexAttribArray(texCoordHandle);
-        GLES20.glVertexAttribPointer(texCoordHandle, 2, GLES20.GL_FLOAT, false, 
-                                     8, texCoordBuffer);
+        if (texCoordHandle < 0) {
+            android.util.Log.e("EdgeDetectionRenderer", "❌ vTexCoord attribute not found!");
+        } else {
+            GLES20.glEnableVertexAttribArray(texCoordHandle);
+            GLES20.glVertexAttribPointer(texCoordHandle, 2, GLES20.GL_FLOAT, false, 
+                                         8, texCoordBuffer);
+        }
         
         int textureHandleUniform = GLES20.glGetUniformLocation(program, "texture");
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandle);
-        GLES20.glUniform1i(textureHandleUniform, 0);
+        if (textureHandleUniform < 0) {
+            android.util.Log.e("EdgeDetectionRenderer", "❌ texture uniform not found!");
+        } else {
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandle);
+            GLES20.glUniform1i(textureHandleUniform, 0);
+        }
         
         // Set effect mode uniform
         int effectModeUniform = GLES20.glGetUniformLocation(program, "effectMode");
@@ -214,10 +226,16 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
             GLES20.glUniform1i(effectModeUniform, effectMode);
         }
         
+        android.util.Log.d("EdgeDetectionRenderer", "🎨 Drawing quad...");
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+        android.util.Log.d("EdgeDetectionRenderer", "✅ Draw complete!");
         
-        GLES20.glDisableVertexAttribArray(positionHandle);
-        GLES20.glDisableVertexAttribArray(texCoordHandle);
+        if (positionHandle >= 0) {
+            GLES20.glDisableVertexAttribArray(positionHandle);
+        }
+        if (texCoordHandle >= 0) {
+            GLES20.glDisableVertexAttribArray(texCoordHandle);
+        }
     }
     
     public void updateFrame(int[] pixels, int width, int height) {
