@@ -89,6 +89,11 @@ const server = http.createServer((req, res) => {
     if (pathname === '/') {
         pathname = '/index.html';
     }
+    
+    // Serve test connection page
+    if (pathname === '/test') {
+        pathname = '/test-connection.html';
+    }
 
     const filePath = path.join(__dirname, pathname);
     const ext = path.extname(filePath).toLowerCase();
