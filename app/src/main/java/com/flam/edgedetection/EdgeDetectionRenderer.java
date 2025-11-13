@@ -26,9 +26,20 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
             "precision mediump float;" +
             "varying vec2 texCoord;" +
             "uniform sampler2D texture;" +
+            "uniform int effectMode;" +  // 0=normal, 1=grayscale, 2=invert
             "void main() {" +
-            "  gl_FragColor = texture2D(texture, texCoord);" +
+            "  vec4 color = texture2D(texture, texCoord);" +
+            "  if (effectMode == 1) {" +  // Grayscale
+            "    float gray = dot(color.rgb, vec3(0.299, 0.587, 0.114));" +
+            "    gl_FragColor = vec4(gray, gray, gray, color.a);" +
+            "  } else if (effectMode == 2) {" +  // Invert
+            "    gl_FragColor = vec4(1.0 - color.rgb, color.a);" +
+            "  } else {" +  // Normal
+            "    gl_FragColor = color;" +
+            "  }" +
             "}";
+    
+    private int effectMode = 0; // 0=normal, 1=grayscale, 2=invert
     
     private Context context;
     private GLSurfaceView glSurfaceView;

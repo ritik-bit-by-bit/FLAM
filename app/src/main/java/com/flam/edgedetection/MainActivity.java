@@ -88,8 +88,9 @@ public class MainActivity extends AppCompatActivity {
         effectButton.setOnClickListener(v -> {
             renderer.cycleEffect();
             String[] effectNames = {"Normal", "Grayscale", "Invert"};
-            int currentEffect = (renderer.getEffectMode() + 1) % 3;
+            int currentEffect = renderer.getEffectMode();
             effectButton.setText("Effect: " + effectNames[currentEffect]);
+            Log.d("MainActivity", "Effect changed to: " + effectNames[currentEffect]);
         });
         
         if (checkCameraPermission()) {
