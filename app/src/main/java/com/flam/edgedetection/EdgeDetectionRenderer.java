@@ -156,6 +156,17 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
                                GLES20.GL_CLAMP_TO_EDGE);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, 
                                GLES20.GL_CLAMP_TO_EDGE);
+        
+        // Initialize texture with a placeholder (black image) so something is always drawn
+        int[] placeholder = new int[640 * 480]; // Default size
+        for (int i = 0; i < placeholder.length; i++) {
+            placeholder[i] = 0x000000FF; // Black RGBA (R=0, G=0, B=0, A=255)
+        }
+        IntBuffer placeholderBuffer = IntBuffer.wrap(placeholder);
+        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, 
+                           640, 480, 0, 
+                           GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, placeholderBuffer);
+        android.util.Log.d("EdgeDetectionRenderer", "✅ Texture initialized with placeholder");
     }
     
     @Override
