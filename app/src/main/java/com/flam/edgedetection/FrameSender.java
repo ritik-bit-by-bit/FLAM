@@ -36,7 +36,20 @@ public class FrameSender {
         new Thread(() -> {
             try {
                 // Convert pixels to Bitmap
-                Bitmap bitmap = Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888);
+                // Note: pixels are in RGBA format from OpenCV, but Bitmap expects ARGB_8888
+                // We need to convert RGBA to ARGB for Bitmap
+                int[] argbPixels = new int[width * height];
+                for (int i = 0; i < pixels.length; i++) {
+                    int rgba = pixels[i];
+                    // Extract components: RGBA format (R in bits 31-24, G in 23-16, B in 15-8, A in 7-0)
+                    int r = (rgba >> 24) & 0xFF;
+                    int g = (rgba >> 16) & 0xFF;
+                    int b = (rgba >> 8) & 0xFF;
+                    int a = rgba & 0xFF;
+                    // Convert to ARGB format for Bitmap (A in bits 31-24, R in 23-16, G in 15-8, B in 7-0)
+                    argbPixels[i] = (a << 24) | (r << 16) | (g << 8) | b;
+                }
+                Bitmap bitmap = Bitmap.createBitmap(argbPixels, width, height, Bitmap.Config.ARGB_8888);
                 
                 // Convert to base64
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
