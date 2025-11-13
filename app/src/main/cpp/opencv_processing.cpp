@@ -84,12 +84,15 @@ Java_com_flam_edgedetection_FrameProcessor_processFrame(
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             Vec3b pixel = processedMat.at<Vec3b>(y, x);
-            // Convert RGB to ARGB (Android format: A R G B)
+            // Convert BGR to RGBA (OpenGL format: R G B A)
             // OpenCV uses BGR, so pixel[0]=B, pixel[1]=G, pixel[2]=R
-            int argb = (0xFF << 24) | (pixel[2] << 16) | (pixel[1] << 8) | pixel[0];
-            pixels[y * width + x] = argb;
+            // OpenGL expects RGBA, so we need: R G B A
+            int rgba = (pixel[2] << 24) | (pixel[1] << 16) | (pixel[0] << 8) | 0xFF;
+            pixels[y * width + x] = rgba;
         }
     }
+    
+    LOGI("Converted %dx%d pixels to RGBA format", width, height);
     
     // Release resources
     env->ReleaseByteArrayElements(yuvData, yuvBytes, JNI_ABORT);
