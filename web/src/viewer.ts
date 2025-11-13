@@ -24,6 +24,8 @@ export class EdgeDetectionViewer {
         processingTime: 0
     };
     
+    private hasLocalImage: boolean = false; // Track if user uploaded an image
+    
     constructor(canvasId: string, statsId: string) {
         const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
         const statsElement = document.getElementById(statsId);
@@ -121,10 +123,12 @@ export class EdgeDetectionViewer {
                     reader.onload = (e) => {
                         const result = e.target?.result as string;
                         if (result) {
+                            this.hasLocalImage = true; // Mark as local image
                             this.displayFrame(result, {
                                 fps: 30,
                                 processingTime: 16.67
                             });
+                            console.log('Local image loaded and will be preserved');
                         }
                     };
                     reader.readAsDataURL(file);
@@ -134,15 +138,29 @@ export class EdgeDetectionViewer {
     }
     
     /**
+     * Clear local image and resume server polling
+     */
+    public clearLocalImage(): void {
+        this.hasLocalImage = false;
+        console.log('Local image cleared, resuming server frame polling');
+    }
+    
+    /**
      * Fetch latest frame from server (called by Android app)
      */
     public async fetchLatestFrame(): Promise<void> {
+        // Don't overwrite user-uploaded images
+        if (this.hasLocalImage) {
+            return;
+        }
+        
         try {
             const response = await fetch('/api/frame');
             if (response.ok) {
                 const frameData = await response.json();
                 if (frameData.image && !frameData.error) {
                     console.log('Received real frame:', frameData.width + 'x' + frameData.height);
+                    this.hasLocalImage = false; // Server frame, not local
                     this.displayFrame(frameData.image, {
                         fps: frameData.fps || 0,
                         resolution: frameData.resolution || { width: 0, height: 0 },
@@ -150,7 +168,8 @@ export class EdgeDetectionViewer {
                     });
                     return; // Successfully displayed real frame
                 } else if (frameData.error) {
-                    console.log('No frame available yet:', frameData.error);
+                    // No frame available - don't overwrite existing display
+                    return;
                 }
             } else {
                 console.log('Server response not OK:', response.status);
@@ -158,9 +177,6 @@ export class EdgeDetectionViewer {
         } catch (error) {
             console.error('Error fetching frame:', error);
         }
-        // Only show demo if no real frame available (don't spam)
-        // Remove this line to stop showing demo frames
-        // this.simulateFrameUpdate();
     }
 
     /**
