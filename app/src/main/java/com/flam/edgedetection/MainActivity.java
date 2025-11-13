@@ -133,6 +133,13 @@ public class MainActivity extends AppCompatActivity {
     private void startCamera() {
         Log.d("MainActivity", "Starting camera...");
         
+        // Ensure PreviewView is ready
+        if (previewView == null) {
+            Log.e("MainActivity", "PreviewView is null!");
+            Toast.makeText(this, "PreviewView not initialized", Toast.LENGTH_LONG).show();
+            return;
+        }
+        
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = 
                 ProcessCameraProvider.getInstance(this);
         
@@ -142,10 +149,19 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("MainActivity", "Camera provider obtained");
                 
                 // Configure Preview (for raw camera feed - hidden but needed for camera stream)
+                // Don't set target resolution - let camera choose best available
                 Preview preview = new Preview.Builder()
-                        .setTargetResolution(new android.util.Size(640, 480))
                         .build();
-                preview.setSurfaceProvider(previewView.getSurfaceProvider());
+                
+                // Set surface provider on UI thread
+                runOnUiThread(() -> {
+                    try {
+                        preview.setSurfaceProvider(previewView.getSurfaceProvider());
+                        Log.d("MainActivity", "Preview surface provider set");
+                    } catch (Exception e) {
+                        Log.e("MainActivity", "Error setting surface provider: " + e.getMessage(), e);
+                    }
+                });
                 
                 // Configure ImageAnalysis (for processing frames)
                 ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
