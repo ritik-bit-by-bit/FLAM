@@ -194,6 +194,7 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
             
             // Send frame to web viewer (every 5 frames to reduce network load)
             if (frameCount % 5 == 0) {
+                android.util.Log.d("FrameProcessor", "📡 Sending frame to web server (frame " + frameCount + ")");
                 FrameSender.sendFrame(outputPixels, width, height, currentFps, processingTime);
             }
             

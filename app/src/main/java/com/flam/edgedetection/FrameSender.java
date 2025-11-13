@@ -30,8 +30,11 @@ public class FrameSender {
     
     public static void sendFrame(int[] pixels, int width, int height, int fps, long processingTime) {
         if (!enabled) {
+            Log.d(TAG, "FrameSender is disabled - frames will not be sent");
             return;
         }
+        
+        Log.d(TAG, "📤 Attempting to send frame: " + width + "x" + height + ", FPS: " + fps);
         
         new Thread(() -> {
             try {
@@ -80,9 +83,9 @@ public class FrameSender {
                 
                 int responseCode = conn.getResponseCode();
                 if (responseCode == 200) {
-                    Log.d(TAG, "✓ Frame sent successfully: " + width + "x" + height + ", FPS: " + fps);
+                    Log.d(TAG, "✅ Frame sent successfully to server: " + width + "x" + height + ", FPS: " + fps);
                 } else {
-                    Log.w(TAG, "✗ Failed to send frame, response code: " + responseCode);
+                    Log.w(TAG, "❌ Failed to send frame, response code: " + responseCode);
                     // Read error response
                     try (java.io.BufferedReader reader = new java.io.BufferedReader(
                             new java.io.InputStreamReader(conn.getErrorStream()))) {

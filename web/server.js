@@ -30,13 +30,14 @@ const server = http.createServer((req, res) => {
 
     // API endpoint to receive frames from Android
     if (pathname === '/api/frame' && req.method === 'POST') {
-        console.log('POST /api/frame - Receiving frame data...');
+        const clientIP = req.socket.remoteAddress || req.headers['x-forwarded-for'] || 'unknown';
+        console.log(`📥 POST /api/frame from ${clientIP} - Receiving frame data...`);
         let body = '';
         req.on('data', chunk => {
             body += chunk.toString();
         });
         req.on('end', () => {
-            console.log(`Received body length: ${body.length} bytes`);
+            console.log(`📦 Received body length: ${body.length} bytes from ${clientIP}`);
             if (body.length === 0) {
                 console.error('ERROR: Empty request body!');
                 res.writeHead(400, { 
@@ -52,6 +53,7 @@ const server = http.createServer((req, res) => {
                 latestFrame = frameData;
                 const timestamp = new Date().toLocaleTimeString();
                 console.log(`[${timestamp}] ✓ Received frame: ${frameData.width}x${frameData.height}, FPS: ${frameData.fps}`);
+                console.log(`✅ Frame received and stored: ${frameData.width}x${frameData.height}, FPS: ${frameData.fps || 0}`);
                 console.log(`    Image data length: ${frameData.image ? frameData.image.length : 0} chars`);
                 res.writeHead(200, { 
                     'Content-Type': 'application/json',
