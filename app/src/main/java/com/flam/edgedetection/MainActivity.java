@@ -32,8 +32,10 @@ public class MainActivity extends AppCompatActivity {
     private PreviewView previewView;
     private GLSurfaceView glSurfaceView;
     private Button toggleButton;
+    private Button effectButton;
     private TextView fpsTextView;
     private TextView resolutionTextView;
+    private TextView processingTimeTextView;
     
     private EdgeDetectionRenderer renderer;
     private FrameProcessor frameProcessor;

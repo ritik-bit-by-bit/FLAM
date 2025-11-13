@@ -192,6 +192,12 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandle);
         GLES20.glUniform1i(textureHandleUniform, 0);
         
+        // Set effect mode uniform
+        int effectModeUniform = GLES20.glGetUniformLocation(program, "effectMode");
+        if (effectModeUniform >= 0) {
+            GLES20.glUniform1i(effectModeUniform, effectMode);
+        }
+        
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         
         GLES20.glDisableVertexAttribArray(positionHandle);
