@@ -115,9 +115,11 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
     
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        android.util.Log.d("EdgeDetectionRenderer", "=== 🎬 OpenGL Surface Created ===");
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         
         // Compile shaders
+        android.util.Log.d("EdgeDetectionRenderer", "Compiling shaders...");
         int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, VERTEX_SHADER_CODE);
         int fragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, FRAGMENT_SHADER_CODE);
         
@@ -128,6 +130,7 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
         GLES20.glLinkProgram(program);
         
         // Check for linking errors
+        android.util.Log.d("EdgeDetectionRenderer", "Linking shader program...");
         int[] linkStatus = new int[1];
         GLES20.glGetProgramiv(program, GLES20.GL_LINK_STATUS, linkStatus, 0);
         if (linkStatus[0] != GLES20.GL_TRUE) {
@@ -141,6 +144,8 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
         int[] textures = new int[1];
         GLES20.glGenTextures(1, textures, 0);
         textureHandle = textures[0];
+        android.util.Log.d("EdgeDetectionRenderer", "✅ Texture created: " + textureHandle);
+        android.util.Log.d("EdgeDetectionRenderer", "✅ OpenGL setup complete!");
         
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandle);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, 
@@ -206,15 +211,25 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
     }
     
     public void updateFrame(int[] pixels, int width, int height) {
+        android.util.Log.d("EdgeDetectionRenderer", "=== 🎨 UPDATE FRAME ===");
+        android.util.Log.d("EdgeDetectionRenderer", "Pixels: " + (pixels != null ? pixels.length : 0));
+        android.util.Log.d("EdgeDetectionRenderer", "Size: " + width + "x" + height);
+        
         synchronized (frameLock) {
             this.pixels = pixels;
             this.frameWidth = width;
             this.frameHeight = height;
             this.frameUpdated = true;
+            android.util.Log.d("EdgeDetectionRenderer", "Frame marked as updated");
         }
+        
         // Request render when frame is updated
         if (glSurfaceView != null) {
+            android.util.Log.d("EdgeDetectionRenderer", "🔄 Requesting render...");
             glSurfaceView.requestRender();
+            android.util.Log.d("EdgeDetectionRenderer", "✅ Render requested");
+        } else {
+            android.util.Log.e("EdgeDetectionRenderer", "❌ GLSurfaceView is NULL!");
         }
     }
     

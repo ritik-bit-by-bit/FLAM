@@ -58,15 +58,18 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
     @Override
     public void analyze(@NonNull ImageProxy image) {
         try {
-            android.util.Log.d("FrameProcessor", "Frame received: " + image.getWidth() + "x" + image.getHeight() + ", format: " + image.getFormat());
+            android.util.Log.d("FrameProcessor", "=== 📸 FRAME RECEIVED ===");
+            android.util.Log.d("FrameProcessor", "Size: " + image.getWidth() + "x" + image.getHeight());
+            android.util.Log.d("FrameProcessor", "Format: " + image.getFormat() + " (35=YUV_420_888)");
+            android.util.Log.d("FrameProcessor", "Processing enabled: " + processingEnabled);
             
             if (image.getFormat() == ImageFormat.YUV_420_888) {
                 processYUVFrame(image);
             } else {
-                android.util.Log.w("FrameProcessor", "Unsupported image format: " + image.getFormat() + " (expected: " + ImageFormat.YUV_420_888 + ")");
+                android.util.Log.w("FrameProcessor", "❌ Unsupported format: " + image.getFormat() + " (expected: " + ImageFormat.YUV_420_888 + ")");
             }
         } catch (Exception e) {
-            android.util.Log.e("FrameProcessor", "Error processing frame: " + e.getMessage(), e);
+            android.util.Log.e("FrameProcessor", "❌ ERROR processing frame: " + e.getMessage(), e);
         } finally {
             image.close();
         }
@@ -86,7 +89,7 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
         int width = image.getWidth();
         int height = image.getHeight();
         
-        android.util.Log.d("FrameProcessor", "Processing frame: " + width + "x" + height);
+        android.util.Log.d("FrameProcessor", "🔄 Converting YUV to NV21: " + width + "x" + height);
         
         // YUV_420_888 to NV21 conversion
         // NV21 format: Y plane + interleaved VU plane
@@ -133,6 +136,9 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
         int[] outputPixels = new int[width * height];
         
         try {
+            android.util.Log.d("FrameProcessor", "✅ YUV conversion complete, size: " + yuvData.length);
+            android.util.Log.d("FrameProcessor", "📞 Calling native OpenCV processFrame...");
+            
             long startTime = System.nanoTime();
             
             // Process frame using native OpenCV
@@ -142,6 +148,9 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
             lastFrameProcessingTime = processingTime;
             double processingTimeMs = processingTime / 1_000_000.0; // Convert to milliseconds
             
+            android.util.Log.d("FrameProcessor", "✅ Native processing complete in " + String.format("%.2f", processingTimeMs) + "ms");
+            android.util.Log.d("FrameProcessor", "Output pixels: " + outputPixels.length + " (expected: " + (width * height) + ")");
+            
             // Update processing time display
             if (processingTimeCallback != null) {
                 processingTimeCallback.onProcessingTimeUpdate(processingTimeMs);
@@ -149,7 +158,11 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
             
             // Update renderer with processed frame
             if (renderer != null) {
+                android.util.Log.d("FrameProcessor", "📤 Sending frame to renderer...");
                 renderer.updateFrame(outputPixels, width, height);
+                android.util.Log.d("FrameProcessor", "✅ Frame sent to renderer");
+            } else {
+                android.util.Log.e("FrameProcessor", "❌ Renderer is NULL!");
             }
             
             // Send frame to web viewer (every 5 frames to reduce network load)
