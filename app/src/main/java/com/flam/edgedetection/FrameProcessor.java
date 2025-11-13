@@ -149,11 +149,27 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
         try {
             android.util.Log.d("FrameProcessor", "✅ YUV conversion complete, size: " + yuvData.length);
             android.util.Log.d("FrameProcessor", "📞 Calling native OpenCV processFrame...");
+            android.util.Log.d("FrameProcessor", "   Input: " + width + "x" + height + ", Processing: " + processingEnabled);
             
             long startTime = System.nanoTime();
             
             // Process frame using native OpenCV
-            processFrame(yuvData, width, height, outputPixels, processingEnabled);
+            try {
+                processFrame(yuvData, width, height, outputPixels, processingEnabled);
+                android.util.Log.d("FrameProcessor", "✅ Native processFrame returned successfully");
+            } catch (UnsatisfiedLinkError e) {
+                android.util.Log.e("FrameProcessor", "❌ CRITICAL: Native method not found!");
+                android.util.Log.e("FrameProcessor", "This means the native library was not loaded properly");
+                android.util.Log.e("FrameProcessor", "Error: " + e.getMessage());
+                e.printStackTrace();
+                image.close();
+                return;
+            } catch (Exception e) {
+                android.util.Log.e("FrameProcessor", "❌ Error calling native processFrame: " + e.getMessage());
+                e.printStackTrace();
+                image.close();
+                return;
+            }
             
             long processingTime = System.nanoTime() - startTime;
             lastFrameProcessingTime = processingTime;
