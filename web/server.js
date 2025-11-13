@@ -79,6 +79,11 @@ const server = http.createServer((req, res) => {
 
     // API endpoint to get latest frame
     if (pathname === '/api/frame' && req.method === 'GET') {
+        if (latestFrame) {
+            console.log(`📤 GET /api/frame - Serving frame: ${latestFrame.width}x${latestFrame.height}`);
+        } else {
+            console.log(`⚠️ GET /api/frame - No frame available yet`);
+        }
         res.writeHead(200, { 
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*'
