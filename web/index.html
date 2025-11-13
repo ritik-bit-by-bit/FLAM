@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FLAM Edge Detection - Web Viewer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>FLAM Edge Detection Viewer</h1>
+            <p class="subtitle">Real-time processed frame display</p>
+        </header>
+        
+        <main>
+            <div class="viewer-section">
+                <div class="canvas-container">
+                    <canvas id="frameCanvas"></canvas>
+                </div>
+                
+                <div class="controls">
+                    <label for="frameInput" class="file-input-label">
+                        Load Sample Frame
+                        <input type="file" id="frameInput" accept="image/*" style="display: none;">
+                    </label>
+                </div>
+            </div>
+            
+            <div class="stats-section">
+                <h2>Frame Statistics</h2>
+                <div id="frameStats" class="stats-container">
+                    <div class="stat-item">
+                        <span class="stat-label">FPS:</span>
+                        <span class="stat-value">0.0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Resolution:</span>
+                        <span class="stat-value">0 × 0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Processing Time:</span>
+                        <span class="stat-value">0.00 ms</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <h2>About</h2>
+                <p>
+                    This web viewer demonstrates the ability to display processed frames
+                    from the Android Edge Detection application. In a production environment,
+                    frames would be received via WebSocket or HTTP endpoint.
+                </p>
+                <p>
+                    <strong>Architecture:</strong> The Android app processes camera frames using
+                    OpenCV (C++) via JNI, renders them with OpenGL ES, and can send processed
+                    frames to this web viewer for display and analysis.
+                </p>
+            </div>
+        </main>
+    </div>
+    
+    <script type="module" src="dist/index.js"></script>
+</body>
+</html>
+
