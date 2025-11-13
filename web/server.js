@@ -34,12 +34,20 @@ const server = http.createServer((req, res) => {
             try {
                 const frameData = JSON.parse(body);
                 latestFrame = frameData;
-                console.log('Received frame:', frameData.width + 'x' + frameData.height);
-                res.writeHead(200, { 'Content-Type': 'application/json' });
+                const timestamp = new Date().toLocaleTimeString();
+                console.log(`[${timestamp}] Received frame: ${frameData.width}x${frameData.height}, FPS: ${frameData.fps}`);
+                res.writeHead(200, { 
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                });
                 res.end(JSON.stringify({ success: true }));
             } catch (e) {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Invalid JSON' }));
+                console.error('Error parsing frame data:', e.message);
+                res.writeHead(400, { 
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                });
+                res.end(JSON.stringify({ error: 'Invalid JSON: ' + e.message }));
             }
         });
         return;
@@ -80,10 +88,15 @@ const server = http.createServer((req, res) => {
     });
 });
 
-server.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}/`);
-    console.log('API endpoints:');
-    console.log('  POST /api/frame - Receive frame from Android');
-    console.log('  GET  /api/frame - Get latest frame');
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n========================================`);
+    console.log(`Server running at:`);
+    console.log(`  http://localhost:${PORT}/`);
+    console.log(`  http://192.168.1.4:${PORT}/ (or your IP)`);
+    console.log(`\nAPI endpoints:`);
+    console.log(`  POST /api/frame - Receive frame from Android`);
+    console.log(`  GET  /api/frame - Get latest frame`);
+    console.log(`\nWaiting for frames from Android app...`);
+    console.log(`========================================\n`);
 });
 

@@ -142,18 +142,25 @@ export class EdgeDetectionViewer {
             if (response.ok) {
                 const frameData = await response.json();
                 if (frameData.image && !frameData.error) {
+                    console.log('Received real frame:', frameData.width + 'x' + frameData.height);
                     this.displayFrame(frameData.image, {
                         fps: frameData.fps || 0,
                         resolution: frameData.resolution || { width: 0, height: 0 },
                         processingTime: frameData.processingTime || 0
                     });
+                    return; // Successfully displayed real frame
+                } else if (frameData.error) {
+                    console.log('No frame available yet:', frameData.error);
                 }
+            } else {
+                console.log('Server response not OK:', response.status);
             }
         } catch (error) {
             console.error('Error fetching frame:', error);
-            // Fallback to demo if no real frame available
-            this.simulateFrameUpdate();
         }
+        // Only show demo if no real frame available (don't spam)
+        // Remove this line to stop showing demo frames
+        // this.simulateFrameUpdate();
     }
 
     /**
