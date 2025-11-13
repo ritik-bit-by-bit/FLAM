@@ -111,18 +111,12 @@ export class EdgeDetectionViewer {
      * Fetch latest frame from server (called by Android app)
      */
     public async fetchLatestFrame(): Promise<void> {
-        // Don't overwrite user-uploaded images
-        if (this.hasLocalImage) {
-            return;
-        }
-        
         try {
             const response = await fetch('/api/frame');
             if (response.ok) {
                 const frameData = await response.json();
                 if (frameData.image && !frameData.error) {
                     console.log('Received real frame:', frameData.width + 'x' + frameData.height);
-                    this.hasLocalImage = false; // Server frame, not local
                     this.displayFrame(frameData.image, {
                         fps: frameData.fps || 0,
                         resolution: frameData.resolution || { width: 0, height: 0 },
@@ -141,50 +135,5 @@ export class EdgeDetectionViewer {
         }
     }
 
-    /**
-     * Simulate receiving frame data (for demo)
-     */
-    public simulateFrameUpdate(): void {
-        // This would typically receive data via WebSocket or HTTP
-        // For demo, we'll use a sample image
-        const sampleImage = this.getSampleBase64Image();
-        this.displayFrame(sampleImage, {
-            fps: Math.random() * 10 + 20, // 20-30 FPS
-            processingTime: Math.random() * 10 + 10 // 10-20ms
-        });
-    }
-    
-    /**
-     * Get a sample base64 encoded image for demonstration
-     */
-    private getSampleBase64Image(): string {
-        // Create a simple test pattern
-        const width = 640;
-        const height = 480;
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = width;
-        tempCanvas.height = height;
-        const tempCtx = tempCanvas.getContext('2d')!;
-        
-        // Draw a gradient pattern
-        const gradient = tempCtx.createLinearGradient(0, 0, width, height);
-        gradient.addColorStop(0, '#000000');
-        gradient.addColorStop(1, '#FFFFFF');
-        tempCtx.fillStyle = gradient;
-        tempCtx.fillRect(0, 0, width, height);
-        
-        // Draw some shapes to simulate edge detection
-        tempCtx.strokeStyle = '#00FF00';
-        tempCtx.lineWidth = 2;
-        tempCtx.beginPath();
-        tempCtx.arc(width / 2, height / 2, 100, 0, Math.PI * 2);
-        tempCtx.stroke();
-        
-        tempCtx.beginPath();
-        tempCtx.rect(width / 4, height / 4, width / 2, height / 2);
-        tempCtx.stroke();
-        
-        return tempCanvas.toDataURL('image/png');
-    }
 }
 
