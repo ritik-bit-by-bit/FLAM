@@ -24,8 +24,6 @@ export class EdgeDetectionViewer {
         processingTime: 0
     };
     
-    private hasLocalImage: boolean = false; // Track if user uploaded an image
-    
     constructor(canvasId: string, statsId: string) {
         const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
         const statsElement = document.getElementById(statsId);
@@ -110,40 +108,6 @@ export class EdgeDetectionViewer {
         this.statsElement.innerHTML = statsHTML;
     }
     
-    /**
-     * Setup image file loader for demo purposes
-     */
-    private setupImageLoader(): void {
-        const fileInput = document.getElementById('frameInput') as HTMLInputElement;
-        if (fileInput) {
-            fileInput.addEventListener('change', (event) => {
-                const file = (event.target as HTMLInputElement).files?.[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const result = e.target?.result as string;
-                        if (result) {
-                            this.hasLocalImage = true; // Mark as local image
-                            this.displayFrame(result, {
-                                fps: 30,
-                                processingTime: 16.67
-                            });
-                            console.log('Local image loaded and will be preserved');
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-        }
-    }
-    
-    /**
-     * Clear local image and resume server polling
-     */
-    public clearLocalImage(): void {
-        this.hasLocalImage = false;
-        console.log('Local image cleared, resuming server frame polling');
-    }
     
     /**
      * Fetch latest frame from server (called by Android app)

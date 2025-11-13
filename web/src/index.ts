@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
         viewer.fetchLatestFrame();
         
         // Poll for new frames from Android app every 100ms (10 FPS display)
-        // But only if no local image is loaded
         let frameCount = 0;
         setInterval(() => {
             viewer.fetchLatestFrame();
@@ -28,28 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Still waiting for frames from Android app...');
             }
         }, 100);
-        
-        // Add button to clear local image and resume server polling
-        const clearButton = document.createElement('button');
-        clearButton.textContent = 'Clear & Resume Server Feed';
-        clearButton.style.cssText = 'position: fixed; bottom: 20px; right: 20px; padding: 10px; z-index: 1000; background: #ff4444; color: white; border: none; border-radius: 4px; cursor: pointer;';
-        clearButton.onclick = () => {
-            viewer.clearLocalImage();
-            viewer.fetchLatestFrame();
-            clearButton.style.display = 'none';
-        };
-        clearButton.style.display = 'none';
-        document.body.appendChild(clearButton);
-        
-        // Show clear button when local image is loaded
-        const originalDisplayFrame = viewer.displayFrame.bind(viewer);
-        viewer.displayFrame = function(base64Image: string, stats?: Partial<FrameStats>) {
-            originalDisplayFrame(base64Image, stats);
-            // Check if this is a local image (not from server)
-            if (base64Image.startsWith('data:image')) {
-                clearButton.style.display = 'block';
-            }
-        };
         
     } catch (error) {
         console.error('Failed to initialize viewer:', error);
