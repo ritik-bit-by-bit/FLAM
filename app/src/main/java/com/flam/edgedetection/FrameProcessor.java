@@ -51,6 +51,10 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
         this.resolutionCallback = callback;
     }
     
+    public void setProcessingTimeCallback(ProcessingTimeCallback callback) {
+        this.processingTimeCallback = callback;
+    }
+    
     @Override
     public void analyze(@NonNull ImageProxy image) {
         try {
@@ -136,6 +140,12 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
             
             long processingTime = System.nanoTime() - startTime;
             lastFrameProcessingTime = processingTime;
+            double processingTimeMs = processingTime / 1_000_000.0; // Convert to milliseconds
+            
+            // Update processing time display
+            if (processingTimeCallback != null) {
+                processingTimeCallback.onProcessingTimeUpdate(processingTimeMs);
+            }
             
             // Update renderer with processed frame
             if (renderer != null) {
@@ -184,6 +194,10 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
     
     interface ResolutionCallback {
         void onResolutionUpdate(int width, int height);
+    }
+    
+    interface ProcessingTimeCallback {
+        void onProcessingTimeUpdate(double timeMs);
     }
 }
 

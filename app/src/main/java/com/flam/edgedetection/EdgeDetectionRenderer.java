@@ -81,6 +81,27 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
         this.glSurfaceView = glSurfaceView;
     }
     
+    public void setEffectMode(int mode) {
+        // 0=normal, 1=grayscale, 2=invert
+        if (mode >= 0 && mode <= 2) {
+            this.effectMode = mode;
+            if (glSurfaceView != null) {
+                glSurfaceView.requestRender();
+            }
+        }
+    }
+    
+    public void cycleEffect() {
+        effectMode = (effectMode + 1) % 3; // Cycle: 0->1->2->0
+        if (glSurfaceView != null) {
+            glSurfaceView.requestRender();
+        }
+    }
+    
+    public int getEffectMode() {
+        return effectMode;
+    }
+    
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -94,6 +115,16 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
         GLES20.glAttachShader(program, vertexShader);
         GLES20.glAttachShader(program, fragmentShader);
         GLES20.glLinkProgram(program);
+        
+        // Check for linking errors
+        int[] linkStatus = new int[1];
+        GLES20.glGetProgramiv(program, GLES20.GL_LINK_STATUS, linkStatus, 0);
+        if (linkStatus[0] != GLES20.GL_TRUE) {
+            String error = GLES20.glGetProgramInfoLog(program);
+            android.util.Log.e("EdgeDetectionRenderer", "Shader program linking failed: " + error);
+            GLES20.glDeleteProgram(program);
+            program = 0;
+        }
         
         // Generate texture
         int[] textures = new int[1];

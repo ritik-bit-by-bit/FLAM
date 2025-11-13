@@ -50,8 +50,10 @@ public class MainActivity extends AppCompatActivity {
         previewView = findViewById(R.id.previewView);
         glSurfaceView = findViewById(R.id.glSurfaceView);
         toggleButton = findViewById(R.id.toggleButton);
+        effectButton = findViewById(R.id.effectButton);
         fpsTextView = findViewById(R.id.fpsTextView);
         resolutionTextView = findViewById(R.id.resolutionTextView);
+        processingTimeTextView = findViewById(R.id.processingTimeTextView);
         
         // Initialize OpenGL renderer
         renderer = new EdgeDetectionRenderer(this);
@@ -66,6 +68,8 @@ public class MainActivity extends AppCompatActivity {
         frameProcessor.setFpsCallback(fps -> runOnUiThread(() -> fpsTextView.setText("FPS: " + fps)));
         frameProcessor.setResolutionCallback((width, height) -> 
             runOnUiThread(() -> resolutionTextView.setText("Resolution: " + width + "x" + height)));
+        frameProcessor.setProcessingTimeCallback(timeMs -> 
+            runOnUiThread(() -> processingTimeTextView.setText("Processing: " + String.format("%.2f", timeMs) + " ms")));
         
         // Enable frame sending to web viewer (update IP address in FrameSender.java)
         FrameSender.setEnabled(true);
@@ -74,8 +78,18 @@ public class MainActivity extends AppCompatActivity {
         
         toggleButton.setOnClickListener(v -> {
             isProcessingEnabled = !isProcessingEnabled;
-            toggleButton.setText(isProcessingEnabled ? "Show Raw" : "Show Processed");
+            // When processing is enabled, show edge-detected output
+            // When disabled, show raw camera feed
+            toggleButton.setText(isProcessingEnabled ? "Edge Detection ON" : "Edge Detection OFF");
             frameProcessor.setProcessingEnabled(isProcessingEnabled);
+            Log.d("MainActivity", "Toggle: Processing " + (isProcessingEnabled ? "enabled" : "disabled"));
+        });
+        
+        effectButton.setOnClickListener(v -> {
+            renderer.cycleEffect();
+            String[] effectNames = {"Normal", "Grayscale", "Invert"};
+            int currentEffect = (renderer.getEffectMode() + 1) % 3;
+            effectButton.setText("Effect: " + effectNames[currentEffect]);
         });
         
         if (checkCameraPermission()) {
