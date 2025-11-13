@@ -1,4 +1,4 @@
-import { EdgeDetectionViewer } from './viewer';
+import { EdgeDetectionViewer, FrameStats } from './viewer';
 
 /**
  * Initialize the web viewer when DOM is loaded
