@@ -165,18 +165,28 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
     
     @Override
     public void onDrawFrame(GL10 gl) {
+        android.util.Log.d("EdgeDetectionRenderer", "=== 🖼️ onDrawFrame CALLED ===");
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         
         synchronized (frameLock) {
+            android.util.Log.d("EdgeDetectionRenderer", "frameUpdated: " + frameUpdated);
+            android.util.Log.d("EdgeDetectionRenderer", "pixels: " + (pixels != null ? pixels.length + " pixels" : "NULL"));
+            android.util.Log.d("EdgeDetectionRenderer", "frameWidth: " + frameWidth + ", frameHeight: " + frameHeight);
+            
             if (frameUpdated && pixels != null && frameWidth > 0 && frameHeight > 0) {
-                android.util.Log.d("EdgeDetectionRenderer", "Drawing frame: " + frameWidth + "x" + frameHeight + ", pixels: " + pixels.length);
+                android.util.Log.d("EdgeDetectionRenderer", "✅ Drawing frame: " + frameWidth + "x" + frameHeight + ", pixels: " + pixels.length);
                 // Update texture with new frame
                 IntBuffer pixelBuffer = IntBuffer.wrap(pixels);
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandle);
                 GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, 
                                    frameWidth, frameHeight, 0, 
                                    GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, pixelBuffer);
+                android.util.Log.d("EdgeDetectionRenderer", "✅ Texture updated with frame data");
                 frameUpdated = false;
+            } else {
+                android.util.Log.w("EdgeDetectionRenderer", "⚠️ Skipping draw - frameUpdated: " + frameUpdated + 
+                                   ", pixels: " + (pixels != null ? "OK" : "NULL") + 
+                                   ", size: " + frameWidth + "x" + frameHeight);
             }
         }
         

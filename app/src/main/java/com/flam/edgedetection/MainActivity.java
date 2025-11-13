@@ -62,7 +62,9 @@ public class MainActivity extends AppCompatActivity {
         renderer.setGLSurfaceView(glSurfaceView);
         glSurfaceView.setEGLContextClientVersion(2);
         glSurfaceView.setRenderer(renderer);
-        glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        // Use CONTINUOUSLY to ensure frames are drawn even if requestRender() has issues
+        glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+        Log.d("MainActivity", "GLSurfaceView render mode set to CONTINUOUSLY");
         
         // Initialize frame processor
         frameProcessor = new FrameProcessor();
