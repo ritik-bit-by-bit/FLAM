@@ -44,8 +44,6 @@ export class EdgeDetectionViewer {
         this.ctx = ctx;
         this.statsElement = statsElement;
         this.imageElement = new Image();
-        
-        this.setupImageLoader();
     }
     
     /**
