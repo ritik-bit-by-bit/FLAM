@@ -36,10 +36,6 @@ The web viewer demonstrates real-time edge detection using your local camera:
 
 *Note: Save your screenshot as `screenshots/web-viewer.png` to display it here*
 
-### Android App
-![Android App Screenshot](screenshots/android-app.png)
-*Note: Screenshots should be added after building and running the app*
-
 ## ⚙️ Setup Instructions
 
 ### Prerequisites
