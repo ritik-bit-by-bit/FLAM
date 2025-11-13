@@ -164,6 +164,7 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
         
         synchronized (frameLock) {
             if (frameUpdated && pixels != null && frameWidth > 0 && frameHeight > 0) {
+                android.util.Log.d("EdgeDetectionRenderer", "Drawing frame: " + frameWidth + "x" + frameHeight + ", pixels: " + pixels.length);
                 // Update texture with new frame
                 IntBuffer pixelBuffer = IntBuffer.wrap(pixels);
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandle);
