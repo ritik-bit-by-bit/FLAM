@@ -22,6 +22,7 @@ public class FrameSender {
     
     public static void setEnabled(boolean enabled) {
         FrameSender.enabled = enabled;
+        Log.d(TAG, "FrameSender " + (enabled ? "ENABLED" : "DISABLED") + " - Server URL: " + SERVER_URL);
     }
     
     public static void setServerUrl(String url) {
@@ -30,14 +31,27 @@ public class FrameSender {
     
     public static void sendFrame(int[] pixels, int width, int height, int fps, long processingTime) {
         if (!enabled) {
-            Log.d(TAG, "FrameSender is disabled - frames will not be sent");
+            Log.w(TAG, "⚠️ FrameSender is DISABLED - frames will not be sent!");
+            Log.w(TAG, "   Call FrameSender.setEnabled(true) to enable");
             return;
         }
         
-        Log.d(TAG, "📤 Attempting to send frame: " + width + "x" + height + ", FPS: " + fps);
+        if (pixels == null || pixels.length == 0) {
+            Log.e(TAG, "❌ Cannot send frame: pixels array is null or empty");
+            return;
+        }
+        
+        if (width <= 0 || height <= 0) {
+            Log.e(TAG, "❌ Cannot send frame: invalid dimensions " + width + "x" + height);
+            return;
+        }
+        
+        Log.d(TAG, "📤 Attempting to send frame: " + width + "x" + height + ", FPS: " + fps + ", pixels: " + pixels.length);
+        Log.d(TAG, "   Server URL: " + SERVER_URL);
         
         new Thread(() -> {
             try {
+                Log.d(TAG, "🌐 Opening connection to: " + SERVER_URL);
                 // Convert pixels to Bitmap
                 // Note: pixels are in RGBA format from OpenCV, but Bitmap expects ARGB_8888
                 // We need to convert RGBA to ARGB for Bitmap
@@ -73,8 +87,8 @@ public class FrameSender {
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setRequestProperty("Accept", "application/json");
                 conn.setDoOutput(true);
-                conn.setConnectTimeout(TIMEOUT_MS);
-                conn.setReadTimeout(TIMEOUT_MS);
+                conn.setConnectTimeout(5000); // 5 seconds for connection
+                conn.setReadTimeout(10000); // 10 seconds for reading response
                 
                 try (OutputStream os = conn.getOutputStream()) {
                     byte[] input = json.getBytes(StandardCharsets.UTF_8);
@@ -103,16 +117,22 @@ public class FrameSender {
                 conn.disconnect();
                 
             } catch (java.net.ConnectException e) {
-                Log.e(TAG, "✗ Connection failed - Is server running? " + e.getMessage());
+                Log.e(TAG, "❌ Connection failed - Is server running? " + e.getMessage());
                 Log.e(TAG, "  Server URL: " + SERVER_URL);
-                Log.e(TAG, "  Make sure: 1) Server is running, 2) Same WiFi network, 3) Correct IP address");
+                Log.e(TAG, "  Make sure: 1) Server is running (npm run serve), 2) Same WiFi network, 3) Correct IP address");
+                Log.e(TAG, "  Find your computer's IP: ipconfig (Windows) or ifconfig (Mac/Linux)");
             } catch (java.net.SocketTimeoutException e) {
-                Log.e(TAG, "✗ Connection timeout - Server not responding: " + e.getMessage());
+                Log.e(TAG, "❌ Connection timeout - Server not responding: " + e.getMessage());
+                Log.e(TAG, "  Check if server is running and accessible from Android device");
+            } catch (java.net.UnknownHostException e) {
+                Log.e(TAG, "❌ Unknown host - Cannot resolve server address: " + e.getMessage());
+                Log.e(TAG, "  Check IP address in SERVER_URL: " + SERVER_URL);
+                Log.e(TAG, "  Update SERVER_URL in FrameSender.java with your computer's IP");
             } catch (IOException e) {
-                Log.e(TAG, "✗ Error sending frame: " + e.getMessage());
+                Log.e(TAG, "❌ IO Error sending frame: " + e.getMessage());
                 e.printStackTrace();
             } catch (Exception e) {
-                Log.e(TAG, "✗ Unexpected error: " + e.getMessage());
+                Log.e(TAG, "❌ Unexpected error: " + e.getMessage());
                 e.printStackTrace();
             }
         }).start();

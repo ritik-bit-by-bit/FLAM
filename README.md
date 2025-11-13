@@ -15,21 +15,30 @@ A real-time edge detection application that captures camera frames on Android, p
 - ✅ **Native C++ Integration**: Full JNI bridge for efficient OpenCV processing
 
 ### Web Viewer (TypeScript)
-- ✅ **Frame Display**: Canvas-based viewer for processed frames
+- ✅ **Real-time Camera Feed**: Uses local webcam with getUserMedia API
+- ✅ **Edge Detection**: JavaScript-based Sobel edge detection running in background
+- ✅ **Frame Display**: Canvas-based viewer showing raw camera feed
 - ✅ **Frame Statistics**: Real-time display of FPS, resolution, and processing time
+- ✅ **Toggle Control**: Button to enable/disable background edge detection
 - ✅ **Modular TypeScript Architecture**: Clean, buildable TypeScript project
-- ✅ **Sample Frame Loading**: Ability to load and display sample processed frames
 - ✅ **Responsive Design**: Modern, responsive UI with gradient styling
 
 ## 📸 Screenshots
 
+### Web Viewer (Working)
+![Web Viewer Screenshot](screenshots/web-viewer.png)
+
+The web viewer demonstrates real-time edge detection using your local camera:
+- **Real-time Camera Feed**: Displays raw camera feed with edge detection running in background
+- **Frame Statistics**: Shows FPS (60), Resolution (640x480), Processing Time (~14.50 ms)
+- **Toggle Control**: Button to enable/disable background edge detection processing
+- **Modern UI**: Clean interface with gradient styling and responsive design
+
+*Note: Save your screenshot as `screenshots/web-viewer.png` to display it here*
+
 ### Android App
 ![Android App Screenshot](screenshots/android-app.png)
 *Note: Screenshots should be added after building and running the app*
-
-### Web Viewer
-![Web Viewer Screenshot](screenshots/web-viewer.png)
-*Note: Screenshots should be added after building and running the web viewer*
 
 ## ⚙️ Setup Instructions
 

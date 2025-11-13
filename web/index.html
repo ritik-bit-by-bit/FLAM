@@ -11,83 +11,48 @@
     <div class="container">
         <header>
             <h1>FLAM Edge Detection Viewer</h1>
-            <p class="subtitle">Real-time processed frame display</p>
+            <p class="subtitle">Real-time edge detection using local camera</p>
         </header>
         
         <main>
             <div class="viewer-section">
                 <div class="canvas-container">
-                    <canvas id="frameCanvas"></canvas>
+                    <canvas id="frameCanvas" width="640" height="480" style="border: 2px solid #4a90e2; border-radius: 8px; background: #000;"></canvas>
                 </div>
                 
+                <div style="text-align: center; margin-top: 20px;">
+                    <button id="toggleButton" style="padding: 12px 24px; font-size: 16px; background: #4a90e2; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                        Toggle Edge Detection
+                    </button>
+                </div>
             </div>
             
             <div class="stats-section">
                 <h2>Frame Statistics</h2>
                 <div id="frameStats" class="stats-container">
-                    <div class="stat-item">
-                        <span class="stat-label">FPS:</span>
-                        <span class="stat-value">0.0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Resolution:</span>
-                        <span class="stat-value">0 × 0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Processing Time:</span>
-                        <span class="stat-value">0.00 ms</span>
-                    </div>
+                    <p>Initializing camera...</p>
                 </div>
             </div>
             
             <div class="info-section">
                 <h2>About</h2>
                 <p>
-                    This web viewer demonstrates the ability to display processed frames
-                    from the Android Edge Detection application. In a production environment,
-                    frames would be received via WebSocket or HTTP endpoint.
+                    This web viewer demonstrates real-time edge detection using your local camera.
+                    Edge detection is performed using JavaScript and the Canvas API.
                 </p>
                 <p>
-                    <strong>Architecture:</strong> The Android app processes camera frames using
-                    OpenCV (C++) via JNI, renders them with OpenGL ES, and can send processed
-                    frames to this web viewer for display and analysis.
+                    <strong>Features:</strong>
+                    <ul>
+                        <li>Real-time camera feed</li>
+                        <li>Edge detection using Sobel operator</li>
+                        <li>FPS counter and processing time display</li>
+                        <li>Toggle between raw feed and edge detection</li>
+                    </ul>
                 </p>
             </div>
         </main>
     </div>
     
-    <script type="module">
-        import { EdgeDetectionViewer } from './dist/viewer.js';
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                const viewer = new EdgeDetectionViewer('frameCanvas', 'frameStats');
-                
-                // Show initial message
-                console.log('FLAM Edge Detection Web Viewer initialized');
-                console.log('Waiting for frames from Android app...');
-                console.log('Make sure:');
-                console.log('1. Android app is running and sending frames');
-                console.log('2. Both devices are on same WiFi network');
-                console.log('3. Server is running with: npm run serve');
-                
-                // Try to fetch real frame immediately
-                viewer.fetchLatestFrame();
-                
-                // Poll for new frames from Android app every 100ms (10 FPS display)
-                let frameCount = 0;
-                setInterval(() => {
-                    viewer.fetchLatestFrame();
-                    frameCount++;
-                    if (frameCount % 50 === 0) { // Log every 5 seconds
-                        console.log('Still waiting for frames from Android app...');
-                    }
-                }, 100);
-            } catch (error) {
-                console.error('Failed to initialize viewer:', error);
-            }
-        });
-    </script>
+    <script type="module" src="dist/index.js"></script>
 </body>
 </html>
-

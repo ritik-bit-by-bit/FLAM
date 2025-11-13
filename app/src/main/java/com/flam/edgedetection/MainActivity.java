@@ -77,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
         
         // Enable frame sending to web viewer (update IP address in FrameSender.java)
         FrameSender.setEnabled(true);
+        Log.d("MainActivity", "FrameSender enabled - frames will be sent to web server");
         
         cameraExecutor = Executors.newSingleThreadExecutor();
         

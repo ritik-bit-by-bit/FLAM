@@ -20,6 +20,7 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
     private long fpsStartTime = System.currentTimeMillis();
     private long lastFrameProcessingTime = 0;
     private int currentFps = 0;
+    private int totalFrameCount = 0; // Total frames processed (never resets)
     
     // Native methods
     static {
@@ -66,18 +67,27 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
         this.processingTimeCallback = callback;
     }
     
+    private int analyzeCallCount = 0; // Track analyze calls for reduced logging
+    
     @Override
     public void analyze(@NonNull ImageProxy image) {
-        try {
-            android.util.Log.d("FrameProcessor", "=== 📸 FRAME RECEIVED ===");
+        analyzeCallCount++;
+        
+        // Log every 30 frames to reduce spam
+        if (analyzeCallCount % 30 == 0) {
+            android.util.Log.d("FrameProcessor", "=== 📸 FRAME RECEIVED (frame " + analyzeCallCount + ") ===");
             android.util.Log.d("FrameProcessor", "Size: " + image.getWidth() + "x" + image.getHeight());
             android.util.Log.d("FrameProcessor", "Format: " + image.getFormat() + " (35=YUV_420_888)");
             android.util.Log.d("FrameProcessor", "Processing enabled: " + processingEnabled);
-            
+        }
+        
+        try {
             if (image.getFormat() == ImageFormat.YUV_420_888) {
                 processYUVFrame(image);
             } else {
-                android.util.Log.w("FrameProcessor", "❌ Unsupported format: " + image.getFormat() + " (expected: " + ImageFormat.YUV_420_888 + ")");
+                if (analyzeCallCount % 30 == 0) {
+                    android.util.Log.w("FrameProcessor", "❌ Unsupported format: " + image.getFormat() + " (expected: " + ImageFormat.YUV_420_888 + ")");
+                }
             }
         } catch (Exception e) {
             android.util.Log.e("FrameProcessor", "❌ ERROR processing frame: " + e.getMessage(), e);
@@ -100,7 +110,9 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
         int width = image.getWidth();
         int height = image.getHeight();
         
-        android.util.Log.d("FrameProcessor", "🔄 Converting YUV to NV21: " + width + "x" + height);
+        if (analyzeCallCount % 30 == 0) {
+            android.util.Log.d("FrameProcessor", "🔄 Converting YUV to NV21: " + width + "x" + height);
+        }
         
         // YUV_420_888 to NV21 conversion
         // NV21 format: Y plane + interleaved VU plane
@@ -147,20 +159,25 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
         int[] outputPixels = new int[width * height];
         
         try {
-            android.util.Log.d("FrameProcessor", "✅ YUV conversion complete, size: " + yuvData.length);
-            android.util.Log.d("FrameProcessor", "📞 Calling native OpenCV processFrame...");
-            android.util.Log.d("FrameProcessor", "   Input: " + width + "x" + height + ", Processing: " + processingEnabled);
+            if (analyzeCallCount % 30 == 0) {
+                android.util.Log.d("FrameProcessor", "✅ YUV conversion complete, size: " + yuvData.length);
+                android.util.Log.d("FrameProcessor", "📞 Calling native OpenCV processFrame...");
+                android.util.Log.d("FrameProcessor", "   Input: " + width + "x" + height + ", Processing: " + processingEnabled);
+            }
             
             long startTime = System.nanoTime();
             
             // Process frame using native OpenCV
             try {
                 processFrame(yuvData, width, height, outputPixels, processingEnabled);
-                android.util.Log.d("FrameProcessor", "✅ Native processFrame returned successfully");
+                if (analyzeCallCount % 30 == 0) {
+                    android.util.Log.d("FrameProcessor", "✅ Native processFrame returned successfully");
+                }
             } catch (UnsatisfiedLinkError e) {
                 android.util.Log.e("FrameProcessor", "❌ CRITICAL: Native method not found!");
                 android.util.Log.e("FrameProcessor", "This means the native library was not loaded properly");
                 android.util.Log.e("FrameProcessor", "Error: " + e.getMessage());
+                android.util.Log.e("FrameProcessor", "Check build output for native library compilation errors");
                 e.printStackTrace();
                 image.close();
                 return;
@@ -175,8 +192,29 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
             lastFrameProcessingTime = processingTime;
             double processingTimeMs = processingTime / 1_000_000.0; // Convert to milliseconds
             
-            android.util.Log.d("FrameProcessor", "✅ Native processing complete in " + String.format("%.2f", processingTimeMs) + "ms");
-            android.util.Log.d("FrameProcessor", "Output pixels: " + outputPixels.length + " (expected: " + (width * height) + ")");
+            if (analyzeCallCount % 30 == 0) {
+                android.util.Log.d("FrameProcessor", "✅ Native processing complete in " + String.format("%.2f", processingTimeMs) + "ms");
+                android.util.Log.d("FrameProcessor", "Output pixels: " + outputPixels.length + " (expected: " + (width * height) + ")");
+            }
+            
+            // Validate output pixels
+            if (outputPixels.length != width * height) {
+                android.util.Log.e("FrameProcessor", "❌ Output pixel count mismatch! Expected: " + (width * height) + ", Got: " + outputPixels.length);
+                image.close();
+                return;
+            }
+            
+            // Check if pixels are all zeros (indicates processing might have failed)
+            boolean allZeros = true;
+            for (int i = 0; i < Math.min(100, outputPixels.length); i++) {
+                if (outputPixels[i] != 0) {
+                    allZeros = false;
+                    break;
+                }
+            }
+            if (allZeros && analyzeCallCount % 30 == 0) {
+                android.util.Log.w("FrameProcessor", "⚠️ First 100 pixels are all zeros - OpenCV might not be processing correctly");
+            }
             
             // Update processing time display
             if (processingTimeCallback != null) {
@@ -185,17 +223,17 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
             
             // Update renderer with processed frame
             if (renderer != null) {
-                android.util.Log.d("FrameProcessor", "📤 Sending frame to renderer...");
+                if (analyzeCallCount % 30 == 0) {
+                    android.util.Log.d("FrameProcessor", "📤 Sending frame to renderer...");
+                }
                 renderer.updateFrame(outputPixels, width, height);
-                android.util.Log.d("FrameProcessor", "✅ Frame sent to renderer");
+                if (analyzeCallCount % 30 == 0) {
+                    android.util.Log.d("FrameProcessor", "✅ Frame sent to renderer");
+                }
             } else {
-                android.util.Log.e("FrameProcessor", "❌ Renderer is NULL!");
-            }
-            
-            // Send frame to web viewer (every 5 frames to reduce network load)
-            if (frameCount % 5 == 0) {
-                android.util.Log.d("FrameProcessor", "📡 Sending frame to web server (frame " + frameCount + ")");
-                FrameSender.sendFrame(outputPixels, width, height, currentFps, processingTime);
+                if (analyzeCallCount == 1) {
+                    android.util.Log.e("FrameProcessor", "❌ Renderer is NULL! Frames will not be displayed!");
+                }
             }
             
             // Update resolution (only once per session or when changed)
@@ -203,8 +241,34 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
                 resolutionCallback.onResolutionUpdate(width, height);
             }
             
-            // Calculate FPS
+            // Increment total frame count (never resets)
+            totalFrameCount++;
+            
+            // Calculate FPS (increments frameCount, resets every second)
             updateFps();
+            
+            // Send frame to web viewer (every 5 frames to reduce network load)
+            // Use totalFrameCount which never resets, so we always send frame 1, 5, 10, 15, etc.
+            // ALWAYS send first frame immediately, then every 5th frame
+            boolean shouldSend = (totalFrameCount == 1 || totalFrameCount % 5 == 0);
+            
+            if (shouldSend) {
+                android.util.Log.d("FrameProcessor", "📡 Sending frame to web server (total frame " + totalFrameCount + ")");
+                android.util.Log.d("FrameProcessor", "   Frame details: " + width + "x" + height + ", pixels: " + outputPixels.length);
+                try {
+                    // Make a copy of pixels to avoid issues with concurrent access
+                    int[] pixelsCopy = new int[outputPixels.length];
+                    System.arraycopy(outputPixels, 0, pixelsCopy, 0, outputPixels.length);
+                    FrameSender.sendFrame(pixelsCopy, width, height, currentFps, processingTime);
+                    android.util.Log.d("FrameProcessor", "✅ FrameSender.sendFrame() called successfully");
+                } catch (Exception e) {
+                    android.util.Log.e("FrameProcessor", "❌ Error calling FrameSender: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } else if (totalFrameCount < 10) {
+                // Log why we're not sending for first few frames
+                android.util.Log.d("FrameProcessor", "⏭️ Skipping frame " + totalFrameCount + " (will send on frame " + ((totalFrameCount / 5 + 1) * 5) + ")");
+            }
         } catch (Exception e) {
             android.util.Log.e("FrameProcessor", "Error in native processing: " + e.getMessage(), e);
         }

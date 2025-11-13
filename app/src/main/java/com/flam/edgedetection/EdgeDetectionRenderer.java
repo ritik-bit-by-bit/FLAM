@@ -53,6 +53,7 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
     private int frameHeight = 0;
     private boolean frameUpdated = false;
     private final Object frameLock = new Object();
+    private int drawCallCount = 0; // Track draw calls for reduced logging
     
     // Quad vertices (full screen)
     private static final float[] QUAD_VERTICES = {
@@ -176,26 +177,44 @@ public class EdgeDetectionRenderer implements GLSurfaceView.Renderer {
     
     @Override
     public void onDrawFrame(GL10 gl) {
-        android.util.Log.d("EdgeDetectionRenderer", "=== 🖼️ onDrawFrame CALLED ===");
+        // Reduce logging frequency to avoid spam (log every 30 frames)
+        if (drawCallCount % 30 == 0) {
+            android.util.Log.d("EdgeDetectionRenderer", "=== 🖼️ onDrawFrame CALLED (frame " + drawCallCount + ") ===");
+        }
+        drawCallCount++;
+        
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         
         synchronized (frameLock) {
-            android.util.Log.d("EdgeDetectionRenderer", "frameUpdated: " + frameUpdated);
-            android.util.Log.d("EdgeDetectionRenderer", "pixels: " + (pixels != null ? pixels.length + " pixels" : "NULL"));
-            android.util.Log.d("EdgeDetectionRenderer", "frameWidth: " + frameWidth + ", frameHeight: " + frameHeight);
-            
+            // Always try to update texture if we have new frame data
             if (frameUpdated && pixels != null && frameWidth > 0 && frameHeight > 0) {
-                android.util.Log.d("EdgeDetectionRenderer", "✅ Drawing frame: " + frameWidth + "x" + frameHeight + ", pixels: " + pixels.length);
-                // Update texture with new frame
-                IntBuffer pixelBuffer = IntBuffer.wrap(pixels);
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandle);
-                GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, 
-                                   frameWidth, frameHeight, 0, 
-                                   GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, pixelBuffer);
-                android.util.Log.d("EdgeDetectionRenderer", "✅ Texture updated with frame data");
-                frameUpdated = false;
-            } else {
-                android.util.Log.w("EdgeDetectionRenderer", "⚠️ Skipping draw - frameUpdated: " + frameUpdated + 
+                if (drawCallCount % 30 == 0) {
+                    android.util.Log.d("EdgeDetectionRenderer", "✅ Updating texture: " + frameWidth + "x" + frameHeight + ", pixels: " + pixels.length);
+                }
+                
+                try {
+                    // Update texture with new frame
+                    IntBuffer pixelBuffer = IntBuffer.wrap(pixels);
+                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandle);
+                    GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, 
+                                       frameWidth, frameHeight, 0, 
+                                       GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, pixelBuffer);
+                    
+                    // Check for OpenGL errors
+                    int error = GLES20.glGetError();
+                    if (error != GLES20.GL_NO_ERROR) {
+                        android.util.Log.e("EdgeDetectionRenderer", "❌ OpenGL error after glTexImage2D: " + error);
+                    } else if (drawCallCount % 30 == 0) {
+                        android.util.Log.d("EdgeDetectionRenderer", "✅ Texture updated successfully");
+                    }
+                    
+                    frameUpdated = false;
+                } catch (Exception e) {
+                    android.util.Log.e("EdgeDetectionRenderer", "❌ Error updating texture: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } else if (drawCallCount % 30 == 0) {
+                android.util.Log.w("EdgeDetectionRenderer", "⚠️ No frame data - frameUpdated: " + frameUpdated + 
                                    ", pixels: " + (pixels != null ? "OK" : "NULL") + 
                                    ", size: " + frameWidth + "x" + frameHeight);
             }
