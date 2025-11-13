@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -103,17 +104,17 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                android.util.Log.d("MainActivity", "Camera permission granted by user, starting camera...");
+                Log.d("MainActivity", "Camera permission granted by user, starting camera...");
                 startCamera();
             } else {
-                android.util.Log.e("MainActivity", "Camera permission denied by user");
+                Log.e("MainActivity", "Camera permission denied by user");
                 Toast.makeText(this, "Camera permission is required to use this app", Toast.LENGTH_LONG).show();
             }
         }
     }
     
     private void startCamera() {
-        android.util.Log.d("MainActivity", "Starting camera...");
+        Log.d("MainActivity", "Starting camera...");
         
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = 
                 ProcessCameraProvider.getInstance(this);
@@ -121,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
         cameraProviderFuture.addListener(() -> {
             try {
                 ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-                android.util.Log.d("MainActivity", "Camera provider obtained");
+                Log.d("MainActivity", "Camera provider obtained");
                 
                 // Configure Preview (for raw camera feed - hidden but needed for camera stream)
                 Preview preview = new Preview.Builder()
@@ -137,16 +138,16 @@ public class MainActivity extends AppCompatActivity {
                         .build();
                 
                 imageAnalysis.setAnalyzer(cameraExecutor, frameProcessor);
-                android.util.Log.d("MainActivity", "ImageAnalysis analyzer set");
+                Log.d("MainActivity", "ImageAnalysis analyzer set");
                 
                 // Select camera
                 CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
                 
                 // Check if camera is available
                 if (cameraProvider.hasCamera(cameraSelector)) {
-                    android.util.Log.d("MainActivity", "Back camera available, binding...");
+                    Log.d("MainActivity", "Back camera available, binding...");
                 } else {
-                    android.util.Log.e("MainActivity", "Back camera not available!");
+                    Log.e("MainActivity", "Back camera not available!");
                     runOnUiThread(() -> {
                         Toast.makeText(this, "Back camera not available", Toast.LENGTH_LONG).show();
                     });
@@ -157,23 +158,23 @@ public class MainActivity extends AppCompatActivity {
                 camera = cameraProvider.bindToLifecycle(
                         this, cameraSelector, preview, imageAnalysis);
                 
-                android.util.Log.d("MainActivity", "Camera bound successfully!");
+                Log.d("MainActivity", "Camera bound successfully!");
                 runOnUiThread(() -> {
                     Toast.makeText(this, "Camera started", Toast.LENGTH_SHORT).show();
                 });
                 
             } catch (ExecutionException e) {
-                android.util.Log.e("MainActivity", "Camera initialization failed: " + e.getMessage(), e);
+                Log.e("MainActivity", "Camera initialization failed: " + e.getMessage(), e);
                 e.printStackTrace();
                 runOnUiThread(() -> {
                     Toast.makeText(this, "Camera error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
             } catch (InterruptedException e) {
-                android.util.Log.e("MainActivity", "Camera initialization interrupted: " + e.getMessage(), e);
+                Log.e("MainActivity", "Camera initialization interrupted: " + e.getMessage(), e);
                 e.printStackTrace();
                 Thread.currentThread().interrupt();
             } catch (Exception e) {
-                android.util.Log.e("MainActivity", "Unexpected camera error: " + e.getMessage(), e);
+                Log.e("MainActivity", "Unexpected camera error: " + e.getMessage(), e);
                 e.printStackTrace();
                 runOnUiThread(() -> {
                     Toast.makeText(this, "Camera error: " + e.getMessage(), Toast.LENGTH_LONG).show();
