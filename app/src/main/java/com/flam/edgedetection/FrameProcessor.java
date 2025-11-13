@@ -54,10 +54,12 @@ public class FrameProcessor implements ImageAnalysis.Analyzer {
     @Override
     public void analyze(@NonNull ImageProxy image) {
         try {
+            android.util.Log.d("FrameProcessor", "Frame received: " + image.getWidth() + "x" + image.getHeight() + ", format: " + image.getFormat());
+            
             if (image.getFormat() == ImageFormat.YUV_420_888) {
                 processYUVFrame(image);
             } else {
-                android.util.Log.w("FrameProcessor", "Unsupported image format: " + image.getFormat());
+                android.util.Log.w("FrameProcessor", "Unsupported image format: " + image.getFormat() + " (expected: " + ImageFormat.YUV_420_888 + ")");
             }
         } catch (Exception e) {
             android.util.Log.e("FrameProcessor", "Error processing frame: " + e.getMessage(), e);
