@@ -164,8 +164,8 @@ public class MainActivity extends AppCompatActivity {
                 });
                 
                 // Configure ImageAnalysis (for processing frames)
+                // Don't force resolution - let camera choose
                 ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
-                        .setTargetResolution(new android.util.Size(640, 480))
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
                         .build();
@@ -173,27 +173,36 @@ public class MainActivity extends AppCompatActivity {
                 imageAnalysis.setAnalyzer(cameraExecutor, frameProcessor);
                 Log.d("MainActivity", "ImageAnalysis analyzer set");
                 
-                // Select camera
+                // Try back camera first, fallback to front camera
                 CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
                 
                 // Check if camera is available
-                if (cameraProvider.hasCamera(cameraSelector)) {
-                    Log.d("MainActivity", "Back camera available, binding...");
-                } else {
-                    Log.e("MainActivity", "Back camera not available!");
-                    runOnUiThread(() -> {
-                        Toast.makeText(this, "Back camera not available", Toast.LENGTH_LONG).show();
-                    });
-                    return;
+                if (!cameraProvider.hasCamera(cameraSelector)) {
+                    Log.w("MainActivity", "Back camera not available, trying front camera...");
+                    cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+                    if (!cameraProvider.hasCamera(cameraSelector)) {
+                        Log.e("MainActivity", "No camera available!");
+                        runOnUiThread(() -> {
+                            Toast.makeText(this, "No camera available on this device", Toast.LENGTH_LONG).show();
+                        });
+                        return;
+                    }
                 }
                 
+                Log.d("MainActivity", "Camera available, binding to lifecycle...");
                 cameraProvider.unbindAll();
-                camera = cameraProvider.bindToLifecycle(
-                        this, cameraSelector, preview, imageAnalysis);
                 
-                Log.d("MainActivity", "Camera bound successfully!");
+                // Bind on UI thread to ensure lifecycle is correct
                 runOnUiThread(() -> {
-                    Toast.makeText(this, "Camera started", Toast.LENGTH_SHORT).show();
+                    try {
+                        camera = cameraProvider.bindToLifecycle(
+                                MainActivity.this, cameraSelector, preview, imageAnalysis);
+                        Log.d("MainActivity", "Camera bound successfully!");
+                        Toast.makeText(MainActivity.this, "Camera started successfully", Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Log.e("MainActivity", "Error binding camera: " + e.getMessage(), e);
+                        Toast.makeText(MainActivity.this, "Camera binding failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
                 });
                 
             } catch (ExecutionException e) {
